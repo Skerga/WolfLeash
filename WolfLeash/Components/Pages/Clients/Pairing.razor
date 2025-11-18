@@ -1,0 +1,43 @@
+@page "/Clients/Pairing"
+@implements IDisposable
+@using NSwagWolfApi
+@using WolfLeash.Components.Pages.Clients.SubComponent
+@inject WolfApi.Api Api
+<h3>Pairing Requests</h3>
+
+@if (PairRequests is null)
+{
+    <div>
+        <Spinner />
+    </div>
+}
+else
+{
+    @foreach (var request in PairRequests)
+    {
+        <PairPinInput Client="@request" OnClientPaired="@GetPairingRequests" />
+    }
+}
+
+@code {
+    private List<PendingPairClient>? PairRequests { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (PairRequests is null)
+        {
+            await GetPairingRequests();
+        }
+    }
+
+    private async Task GetPairingRequests()
+    {
+        var result = await Api.WolfApi.PendingAsync();
+        PairRequests = result?.Requests.ToList() ?? [];
+    }
+
+    public void Dispose()
+    {
+
+    }
+}

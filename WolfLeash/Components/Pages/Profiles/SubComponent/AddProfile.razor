@@ -1,0 +1,113 @@
+@implements IDisposable
+@using System.ComponentModel.DataAnnotations
+@using WolfLeash.Extensions
+@inject ILogger<AddProfile> Logger
+@inject WolfApi.Api Api
+@inject EventLogger Event
+
+<EditForm EditContext="editContext" OnValidSubmit="Submit">
+    <DataAnnotationsValidator />
+    <div>
+        <label>
+            <TextInput @bind-Value="Data!.Name" Placeholder="Name"/>
+            <ValidationMessage For="() => Data!.Name"/>
+        </label>
+    </div>
+    <div>
+        <label>
+            <TextInput @bind-Value="Data!.IconPngPath" Placeholder="Icon"/>
+            <ValidationMessage For="() => Data!.IconPngPath"/>
+        </label>
+    </div>
+
+    <div>
+        <label>
+            <InputCheckbox @bind-Value="_showPinInput"/>
+            Enable Pin.
+            @if (_showPinInput)
+            {
+                <TextInput @bind-Value="Data!.PinString" Placeholder="Pin"/>
+                <ValidationMessage For="() => Data!.PinString"/>
+            }
+        </label>
+    </div>
+
+    <div>
+        <Button Type="ButtonType.Submit" Color="ButtonColor.Primary">Submit</Button>
+    </div>
+</EditForm>
+
+
+@code {
+    [Parameter]
+    public EventCallback OnValidSubmit { get; set; }
+
+    [SupplyParameterFromForm]
+    public ProfileFormData? Data { get; set; }
+    private ValidationMessageStore? messageStore;
+    private EditContext? editContext;
+
+    private bool _showPinInput = false;
+
+    protected override void OnInitialized()
+    {
+        Data ??= new();
+        editContext = new(Data);
+        editContext.OnValidationRequested += HandleValidationRequested;
+        messageStore = new(editContext);
+    }
+
+    private void HandleValidationRequested(object? sender,
+        ValidationRequestedEventArgs args)
+    {
+        messageStore?.Clear();
+
+        //messageStore?.Add(() => Data!.Name, "Stupid Name.");
+    }
+
+    private async Task Submit()
+    {
+        var newProfile = new NSwagWolfApi.Profile
+        {
+            Name = Data!.Name,
+            Id = Guid.NewGuid().ToBase64(),
+            Icon_png_path = Data!.IconPngPath,
+            Pin = _showPinInput ? Data!.Pin : null,
+            Apps = Array.Empty<NSwagWolfApi.App>()
+        };
+
+        await Api.AddProfile(newProfile);
+
+        Event.LogEvent(new ToastMessage(ToastType.Info, "", "Information", $"{DateTime.Now}", $"Added new profile: {newProfile.Name}."));
+
+        // Reset form
+        Data = new();
+
+        await OnValidSubmit.InvokeAsync();
+    }
+
+    public void Dispose()
+    {
+        if (editContext is not null)
+        {
+            editContext.OnValidationRequested -= HandleValidationRequested;
+        }
+    }
+
+    public class ProfileFormData
+    {
+        [Required(ErrorMessage = "Name is Required", AllowEmptyStrings = false)]
+        [MinLength(3, ErrorMessage = "Name should be minimum 3 characters long")]
+        public string Name { get; set; } = null!;
+
+        public string Id { get; set; } = null!;
+
+        public string IconPngPath { get; set; } = "";
+
+        [MinLength(4, ErrorMessage = "Pin should be minimum 4 numbers long")]
+        [RegularExpression("[0-9]*", ErrorMessage = "Pin can only contain numbers")]
+        public string? PinString { get; set; } = null!;
+
+        public ICollection<int>? Pin => PinString?.Select(c => int.Parse(c.ToString())).ToList();
+    }
+}

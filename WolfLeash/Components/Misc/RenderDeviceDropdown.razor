@@ -1,0 +1,28 @@
+@using System.Text.RegularExpressions
+<Dropdown Color="DropdownColor.Secondary">
+    <DropdownToggleButton>Render Device</DropdownToggleButton>
+    <DropdownMenu>
+        <DropdownHeader>Render Devices</DropdownHeader>
+        @foreach (var device in RenderDevices)
+        {
+            <DropdownItem Type="DropdownItemType.Button" >@device</DropdownItem>
+        }
+    </DropdownMenu>
+</Dropdown>
+
+@code {
+    private List<string> RenderDevices { get; set; } = [];
+
+    protected override void OnInitialized()
+    {
+         var files = Directory.GetFiles("/dev/dri/");
+         foreach (var file in files)
+         {
+             // FileSystemInfo.Unix
+             // File.Get(Path.Combine("/dev/dri/", file))
+             if(Regex.IsMatch(file, ".*?/renderD[0-9]+"))
+                 RenderDevices.Add(file);
+         }
+    }
+
+}

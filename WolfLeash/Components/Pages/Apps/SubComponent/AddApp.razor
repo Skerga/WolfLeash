@@ -1,0 +1,225 @@
+@implements IDisposable
+@using System.ComponentModel.DataAnnotations
+@using System.Text.RegularExpressions
+@using NSwagWolfApi
+@using WolfLeash.Extensions
+@using App = NSwagWolfApi.App
+@inject ILogger<AddProfile> Logger
+@inject WolfApi.Api Api
+@inject WolfLeashDbContext Context
+@inject EventLogger Event
+
+<h3>New App</h3>
+
+<div style="width: 500px">
+<EditForm EditContext="editContext" OnValidSubmit="Submit" xmlns="http://www.w3.org/1999/html">
+    <DataAnnotationsValidator />
+    <div class="form-group row mb-3">
+        <TextInput @bind-Value="Data!.Title" Placeholder="Title"/>
+        <ValidationMessage For="() => Data!.Title"/>
+    </div>
+    <div class="form-group row mb-3">
+        <TextInput @bind-Value="Data!.IconPngPath" Placeholder="Icon"/>
+        <ValidationMessage For="() => Data!.IconPngPath"/>
+    </div>
+
+    <h5>Runner Configuration:</h5>
+    <div class="form-group row mb-3">
+        <TextInput @bind-Value="Data!.RunnerName" Placeholder="Runner Name"/>
+        <ValidationMessage For="() => Data!.RunnerName"/>
+    </div>
+    <div class="form-group row mb-3">
+        <TextInput @bind-Value="Data!.Image" Placeholder="Image"/>
+        <ValidationMessage For="() => Data!.Image"/>
+    </div>
+
+    <div class="form-group row mb-3">
+        <Accordion Flush="true">
+            <AccordionItem Title="Advanced Options">
+                <Content>
+                    <div class="form-group row mb-3">
+                        <TextArrayInput @ref="@Env" Validator="@EnvValidator" Placeholder="Env"/>
+                    </div>
+                    <div class="form-group row mb-3">
+                        <TextArrayInput @ref="@Ports" Validator="@PortsValidator" Placeholder="Ports"/>
+                    </div>
+                    <div class="form-group row mb-3">
+                        <TextArrayInput @ref="@Mounts" Validator="@MountsValidator" Placeholder="Mounts"/>
+                    </div>
+                    <div class="form-group row mb-3">
+                        <TextArrayInput @ref="@Devices" Validator="@DevicesValidator" Placeholder="Devices" />
+                    </div>
+
+                    <div class="form-group row mb-3">
+                        <h6>Base Create Json:</h6>
+                        <TextAreaInput @bind-Value="Data!.BaseCreateJson" Placeholder="Base Create Json" Rows="8"/>
+                        <ValidationMessage For="() => Data!.BaseCreateJson"/>
+                    </div>
+                </Content>
+            </AccordionItem>
+        </Accordion>
+    </div>
+
+    <div>
+        <Button Type="ButtonType.Submit" Color="ButtonColor.Primary">Submit</Button>
+    </div>
+</EditForm>
+</div>
+
+@code {
+    [Parameter]
+    public EventCallback OnValidSubmit { get; set; }
+
+    [SupplyParameterFromForm]
+    public AppFormData? Data { get; set; }
+    private ValidationMessageStore? messageStore;
+    private EditContext? editContext;
+
+    protected override void OnInitialized()
+    {
+        Data ??= new();
+        editContext = new(Data);
+        editContext.OnValidationRequested += HandleValidationRequested;
+        messageStore = new(editContext);
+    }
+
+    private void HandleValidationRequested(object? sender,
+        ValidationRequestedEventArgs args)
+    {
+        messageStore?.Clear();
+    }
+
+    #region Env
+    private TextArrayInput Env = null!;
+    private static List<string> EnvValidator(string s)
+    {
+        var errors = new List<string>();
+
+        if(!Regex.IsMatch(s, ".*=.*"))
+            errors.Add("Env should be in the format VARIABLE=VALUE.");
+
+        return errors;
+    }
+    #endregion
+
+    #region Ports
+    private TextArrayInput Ports = null!;
+    private static List<string> PortsValidator(string s)
+    {
+        var errors = new List<string>();
+
+        if (!Regex.IsMatch(s, "^([1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5]):([1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])"))
+            errors.Add("Port should be formated (0-65535):(0-65535)");
+
+        return errors;
+    }
+    #endregion
+
+    #region Mounts
+    private TextArrayInput Mounts = null!;
+    private static List<string> MountsValidator(string s)
+    {
+        var errors = new List<string>();
+
+        if(!Regex.IsMatch(s, ".*:.*"))
+            errors.Add("Mounts should be in the format A:B.");
+
+        return errors;
+    }
+    #endregion
+
+    #region Devices
+    private TextArrayInput Devices = null!;
+    private static List<string> DevicesValidator(string s)
+    {
+        var errors = new List<string>();
+
+
+
+        return errors;
+    }
+    #endregion
+
+    private async Task Submit()
+    {
+        var newApp = new App
+        {
+            Title = Data!.Title,
+            Id = Guid.NewGuid().ToBase64(),
+            Icon_png_path = Data!.IconPngPath,
+            // Render_node = Data!.Render_node,
+            // Start_virtual_compositor = Data!.Start_virtual_compositor,
+            // Start_audio_server = Data!.Start_audio_server,
+            // Support_hdr = Data!.Support_hdr,
+            Runner = new()
+            {
+                Name = Data!.RunnerName,
+                Image = Data!.Image,
+                Type = "docker",
+                Env = Env.Values,
+                Ports = Ports.Values,
+                Mounts = Mounts.Values,
+                Devices = Devices.Values,
+                Base_create_json = Data!.BaseCreateJson
+            }
+        };
+
+        Context.Apps.Add(newApp);
+
+        try
+        {
+            await Context.SaveChangesAsync();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+
+        Event.LogEvent(new ToastMessage(
+            ToastType.Info,
+            "",
+            "Information",
+            $"{DateTime.Now}",
+            $"Added new profile: {newApp.Title}."));
+
+        // Reset form
+        Data = new();
+        Env.Values = [];
+        Ports.Values = [];
+        Mounts.Values = [];
+        Devices.Values = [];
+
+        await OnValidSubmit.InvokeAsync();
+    }
+
+    public class AppFormData
+    {
+        [Required(ErrorMessage = "Title is Required", AllowEmptyStrings = false)]
+        [MinLength(3, ErrorMessage = "Title should be minimum 3 characters long")]
+        public string Title { get; set; } = null!;
+        public string IconPngPath { get; set; } = null!;
+        // public bool Start_virtual_compositor { get; set; } = true;
+        // public bool Start_audio_server { get; set; } = true;
+        // public bool Support_hdr { get; set; } = false;
+        // public string Render_node { get; set; }
+        //
+        // public string H264_gst_pipeline { get; set; }
+        // public string Hevc_gst_pipeline { get; set; }
+        // public string Av1_gst_pipeline { get; set; }
+        // public string Opus_gst_pipeline { get; set; }
+
+        #region Runner Fields
+        public string BaseCreateJson { get; set; } = new Runner().BaseCreateJson;
+        [Required(ErrorMessage = "Title is Required", AllowEmptyStrings = false)]
+        public string Image { get; set; } = null!;
+        [Required(ErrorMessage = "Runner Name is Required", AllowEmptyStrings = false)]
+        public string RunnerName { get; set; } = null!;
+        #endregion
+    }
+
+    public void Dispose()
+    {
+        if (editContext is not null)
+            editContext.OnValidationRequested -= HandleValidationRequested;
+    }
+}

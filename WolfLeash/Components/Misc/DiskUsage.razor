@@ -1,0 +1,184 @@
+@using NSwagDocker
+@using WolfLeash.Components.Classes
+@inject WolfApi.Api Api
+@inject ColorGenerator colorsGen
+@inject ILogger<DiskUsage> Logger
+
+<PieChart @ref="pieChart" Width="500" />
+
+@code {
+    private PieChart pieChart = default!;
+    private PieChartOptions pieChartOptions = default!;
+    private ChartData chartData = default!;
+    private string[]? backgroundColors;
+
+    private int dataLabelsCount = 0;
+
+    bool isDataReady = false;
+    bool isInitialized = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Api.Profiles is null)
+            await Api.UpdateProfiles();
+
+        var profiles = Api.Profiles?
+            .Select(p => (p.Name, DirSize($"/etc/wolf/profile-data/{p.Id}")))
+            .Select(t => ($"{t.Name}", t.Item2))
+            .ToList() ?? [];
+
+        Api.DockerApi.ReadResponseAsString = true;
+        
+        var tasks = Api.Profiles?
+            .SelectMany(p => p.Apps)
+            .Select(a => a.Runner.Image)
+            .Distinct()
+            .Where(s => s is not null && s != "")
+            .Select(s => Api.DockerApi.ImageInspectAsync(s)) ?? [];
+
+        List<(string, double?)> topLayer =
+        [
+            ("Profiles", profiles.Select(t => t.Item2).Sum())
+        ];
+
+        double? sum = 0;
+        await foreach (var inspectTask in Task.WhenEach(tasks))
+        {
+            try
+            {
+                var inspect = await inspectTask;
+                var imageName = inspect.RepoTags.FirstOrDefault() ?? "";
+                var min = imageName.LastIndexOf("/", StringComparison.Ordinal)+1;
+                imageName = imageName[min..];
+                profiles.Add((imageName, inspect.Size / (double)1_000_000_000));
+                sum += inspect.Size;
+            }
+            catch (ApiException) { }
+        }
+
+        sum /= (double)1_000_000_000;
+        topLayer.Add(("Docker", sum));
+        
+        profiles = profiles
+            .OrderDescending()
+            .Take(12)
+            .ToList();
+        
+        backgroundColors = ColorUtility.CategoricalTwelveColors;
+        
+        chartData = new ChartData
+        {
+            //Labels = GetDefaultDataLabels(profiles.Select(t => t.Item1).ToList()), 
+            //Datasets = GetDefaultDataSets(profiles.Select(t => t.Item2).ToList())
+            //Labels = GetDefaultDataLabels(topLayer.Select(t => t.Item1).ToList()),
+            //Datasets = GetDefaultDataSets(topLayer.Select(t => t.Item2).ToList())
+            Labels = GetDataLabels(profiles.Select(t => t.Item1).ToList()),
+            Datasets = GetChartDatasets(profiles.Select(t => t.Item2).ToList())
+        };
+
+        pieChartOptions = new();
+        pieChartOptions.Responsive = true;
+        pieChartOptions.Plugins.Title!.Text = "Disk Usage";
+        pieChartOptions.Plugins.Title.Display = true;
+        pieChartOptions.Plugins.Legend.Position = "right";
+
+        isDataReady = true;
+    }
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (isDataReady && !isInitialized)
+        {
+            await pieChart.InitializeAsync(chartData, pieChartOptions);
+            isInitialized = true;
+        }
+        
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    #region Data Preparation
+
+    private List<IChartDataset> GetDefaultDataSets(List<double?> sizes)
+    {
+        var datasets = new List<IChartDataset>();
+        
+        datasets.Add(GetPieChartDataset(sizes));
+        
+        return datasets;
+    }
+
+    private PieChartDataset GetPieChartDataset(List<double?>? sizes)
+    {
+        return new PieChartDataset{ Label = "GB", Data = sizes, BackgroundColor = GetRandomBackgroundColors() };
+    }
+
+    private List<IChartDataset> GetChartDatasets(params List<double?>[] data)
+    {
+        return data
+            .Select(dataset => new PieChartDataset
+            {
+                Label = "GB", 
+                Data = dataset, 
+                BackgroundColor = GetRandomBackgroundColors()
+            })
+            .Cast<IChartDataset>()
+            .ToList();
+    }
+    
+    private List<string> GetRandomBackgroundColors()
+    {
+        var colors = new List<string>();
+        for (var index = 0; index < dataLabelsCount; index++)
+        {
+            colors.Add(backgroundColors![index]);
+        }
+
+        return colors;
+    }
+
+    private List<string> GetDefaultDataLabels(List<string> labels)
+    {
+        dataLabelsCount = labels.Count();
+        return labels;
+    }
+    
+    private List<string> GetDataLabels(params List<string>[] labels)
+    {
+        var labelsFlat = labels.SelectMany(l => l).ToList();
+        
+        dataLabelsCount = labelsFlat.Count();
+        return labelsFlat;
+    }
+    
+    private static double? DirSize(string path)
+    {
+        try
+        {
+            return DirSize(new DirectoryInfo(path)) / (double)1_000_000_000;
+        }
+        catch (DirectoryNotFoundException)
+        {
+            return 0;
+        }
+    }
+    
+    private static long DirSize(DirectoryInfo d) 
+    {
+        long size = 0;    
+        // Add file sizes.
+        var fis = d.GetFiles();
+        foreach (var fi in fis) 
+        {      
+            size += fi.Length;    
+        }
+        // Add subdirectory sizes.
+        var dis = d.GetDirectories();
+        foreach (var di in dis) 
+        {
+            size += DirSize(di);   
+        }
+        return size;
+    }
+    
+    #endregion  Data Preparation
+}

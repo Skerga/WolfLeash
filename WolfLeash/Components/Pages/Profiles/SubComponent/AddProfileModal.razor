@@ -1,0 +1,16 @@
+<Modal @ref="@_modal" title="Add new Profile" UseStaticBackdrop="true" CloseOnEscape="false" Size="ModalSize.Large">
+    <BodyTemplate>
+        <AddProfile OnValidSubmit="OnHideModalClick"/>
+    </BodyTemplate>
+</Modal>
+
+@code {
+    [Parameter, EditorRequired]
+    public EventCallback OnProfilesModified { get; set; }
+    [Inject]
+    protected EventLogger EventLogger { get; set; } = null!;
+    private Modal _modal = null!;
+
+    private async Task OnHideModalClick() => await _modal.HideAsync();
+    public async Task ShowAsync() => await _modal.ShowAsync();
+}

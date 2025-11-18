@@ -7,23 +7,81 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\OpenApiGenerator\OpenApiGenerator.csproj"
-                          PrivateAssets="all"
-                          OutputItemType="Analyzer" ReferenceOutputAssembly="false"
-                          IncludeAssets="runtime; build; native; contentfiles; analyzers"/>
-        
         <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.10" />
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+        <PackageReference Include="Blazor.Bootstrap" Version="3.4.0" />
+        <ProjectReference Include="..\WolfApi\WolfApi.csproj" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.11" />
+        <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.11"/>
+        <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.11"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.11" />
+        <PackageReference Include="EntityFrameworkCore.Exceptions.Sqlite" Version="8.1.3" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.11">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+        </PackageReference>
     </ItemGroup>
-
-    <PropertyGroup>
-        <!-- Update the property to include all EmbeddedResource files -->
-        <AdditionalFileItemNames>$(AdditionalFileItemNames);EmbeddedResource</AdditionalFileItemNames>
-    </PropertyGroup>
-    
+        
     <ItemGroup>
-        <!--  <AdditionalFiles Include="*/*/*.tscn" /> -->
-        <EmbeddedResource Include="WolfApi.json" />
-        <EmbeddedResource Include="Docker.json" />
+      <Folder Include="wwwroot\lib\" />
+    </ItemGroup>
+        
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="wwwroot\Moonlightweb\server\config.json" />
+      <_ContentIncludedByDefault Remove="wwwroot\Moonlightweb\server\data.json" />
+      <_ContentIncludedByDefault Remove="wwwroot\server\config.json" />
+      <_ContentIncludedByDefault Remove="wwwroot\server\data.json" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\api.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\api_bindings.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\component\context_menu.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\component\error.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\component\fetch_list.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\component\game\index.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\component\game\list.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\component\host\add_modal.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\component\host\index.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\component\host\list.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\component\index.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\component\input.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\component\list.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\component\modal\form.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\component\modal\index.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\component\settings_menu.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\component\sidebar\index.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\config_.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\index.html" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\index.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\ios_right_click.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\manifest.json" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\resources\arrow_left.svg" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\resources\baseline-check_circle_outline-24px.svg" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\resources\baseline-error_outline-24px.svg" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\resources\baseline-help_outline-24px.svg" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\resources\baseline-lock-24px.svg" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\resources\baseline-warning-24px.svg" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\resources\desktop_windows-48px.svg" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\resources\discord.svg" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\resources\ic_add_to_queue_white_48px.svg" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\resources\ic_videogame_asset_white_48px.svg" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\resources\index.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\resources\moonlight.svg" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\resources\no_app_image.png" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\resources\play_arrow_FILL1_wght700_GRAD200_opsz48.svg" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\resources\question_mark.svg" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\resources\settings.svg" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\resources\stop_FILL1_wght700_GRAD200_opsz48.svg" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\resources\update.svg" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\resources\warning_FILL1_wght300_GRAD200_opsz24.svg" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\screen_keyboard.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\stream.html" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\stream.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\stream\buffer.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\stream\gamepad.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\stream\index.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\stream\input.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\stream\keyboard.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\stream\mouse.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\stream\video.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\static\styles.css" />
+      <_ContentIncludedByDefault Remove="Components\Apps\New\AddNewApp.razor" />
     </ItemGroup>
 </Project>

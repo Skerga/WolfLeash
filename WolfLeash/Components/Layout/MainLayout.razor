@@ -1,19 +1,27 @@
 ﻿@inherits LayoutComponentBase
+@implements IDisposable
+@inject WolfApi.Api Api
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu/>
-    </div>
+
+<div class="bb-page">
+
+    <Sidebar Href="/"
+             IconName="IconName.DpadFill"
+             Title="WolfLeash"
+             DataProvider="SidebarDataProvider" />
 
     <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+        <div class="bb-top-row px-4 d-flex justify-content-end">
+            <div class="float-end">
+                <ThemeSwitcher Position="DropdownMenuPosition.End" />
+            </div>
         </div>
 
         <article class="content px-4">
             @Body
         </article>
     </main>
+
 </div>
 
 <div id="blazor-error-ui" data-nosnippet>
@@ -21,3 +29,67 @@
     <a href="." class="reload">Reload</a>
     <span class="dismiss">🗙</span>
 </div>
+
+<Toasts class="p-3" AutoHide="true" Delay="4000" StackLength="3" Placement="ToastsPlacement.TopRight" />
+
+@code {
+    IEnumerable<NavItem>? navItems;
+    [Inject] protected ToastService ToastService { get; set; } = null!;
+
+    protected override void OnInitialized()
+    {
+        Api.ClientPairRequestEvent += OnClientPairRequestEvent;
+    }
+
+    private void OnClientPairRequestEvent(string json)
+        => InvokeAsync(ShowPairRequestToast);
+
+    private void ShowPairRequestToast()
+    {
+        ToastService.Notify(new ToastMessage
+        {
+            Type = ToastType.Info,
+            IconName = IconName.Display,
+            Title = "Pairing Request",
+            HelpText = $"{DateTime.Now}",
+            Content = @<div>Received new Pairing Request. Check <a href="clients/pairing">Here</a></div>,
+        });
+    }
+
+    private async Task<SidebarDataProviderResult> SidebarDataProvider(SidebarDataProviderRequest request)
+    {
+        if (navItems is null)
+            navItems = GetNavItems();
+
+        return await Task.FromResult(request.ApplyTo(navItems));
+    }
+
+    private IEnumerable<NavItem> GetNavItems()
+    {
+        navItems = new List<NavItem>
+        {
+            new NavItem { Id = "1", Href = "/", IconName = IconName.HouseDoorFill, Text = "Home"},
+
+            new NavItem { Id = "2", IconName = IconName.People, Text = "Profiles" },
+            new NavItem { Id = "3", Href = "/profiles/show", IconName = IconName.List, Text = "Show", ParentId="2"},
+            new NavItem { Id = "4", Href = "/profiles/add", IconName = IconName.Plus, Text = "Add", ParentId="2"},
+
+            new NavItem { Id = "5", IconName = IconName.Controller, Text = "Apps" },
+            new NavItem { Id = "6", Href = "/apps/show", IconName = IconName.List, Text = "Show", ParentId="5"},
+            new NavItem { Id = "7", Href = "/apps/add", IconName = IconName.Plus, Text = "Add", ParentId="5"},
+
+            new NavItem { Id = "8", IconName = IconName.Display, Text = "Clients" },
+            new NavItem { Id = "9", Href = "/clients/paired", IconName = IconName.List, Text = "Paired Clients", ParentId="8"},
+            new NavItem { Id = "10", Href = "/clients/pairing", IconName = IconName.Plus, Text = "Pairing Requests", ParentId="8"},
+
+            new NavItem { Id = "11", Href = "/settings", IconName = IconName.Gear, Text = "Settings" }
+        };
+
+        return navItems;
+    }
+
+    public void Dispose()
+    {
+        Api.ClientPairRequestEvent -= OnClientPairRequestEvent;
+    }
+}

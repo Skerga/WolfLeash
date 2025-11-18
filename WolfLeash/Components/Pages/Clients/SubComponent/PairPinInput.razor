@@ -1,0 +1,44 @@
+@using NSwagWolfApi
+@inject WolfApi.Api Api
+
+<a>Client Address: @Client.Client_ip</a>
+<div class="mb-3">
+    <PasswordInput @bind-Value="@Pin" />
+    <Button @onclick="@SendPairingPin" Color="ButtonColor.Primary">Pair</Button>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public PendingPairClient Client { get; set; }
+    [Parameter, EditorRequired] public EventCallback<PendingPairClient> OnClientPaired { get; set; }
+    [Inject] private EventLogger EventLogger { get; set; } = null!;
+    private string Pin { get; set; } = string.Empty;
+
+    private async Task SendPairingPin()
+    {
+        var result = await Api.WolfApi.ClientAsync(new PairRequest()
+        {
+            Pair_secret = Client.Pair_secret,
+            Pin = Pin
+        });
+
+        if (!result.Success)
+        {
+            EventLogger.LogEvent(new ToastMessage(
+                ToastType.Warning,
+                IconName.ExclamationCircle,
+                "Pairing Unsuccessful",
+                $"{DateTime.Now}",
+                $"Pairing for Client: {Client.Client_ip} was Unsuccessful"));
+            return;
+        }
+
+        EventLogger.LogEvent(new ToastMessage(
+            ToastType.Success,
+            IconName.CheckCircle,
+            "Pairing Successful",
+            $"{DateTime.Now}",
+            $"Pairing for Client: {Client.Client_ip} was Successful"));
+
+        await OnClientPaired.InvokeAsync(Client);
+    }
+}

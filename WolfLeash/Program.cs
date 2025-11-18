@@ -1,6 +1,9 @@
 using System.Net.Sockets;
+using Microsoft.EntityFrameworkCore;
+using WolfApi;
 using WolfLeash.Components;
 using WolfLeash.Components.Classes;
+using WolfLeash.Database;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddEnvironmentVariables("WOLF_");
@@ -9,31 +12,13 @@ builder.Configuration.AddEnvironmentVariables("WOLF_");
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddHttpClient<HttpClient, HttpClientWrapper>(p =>
-{
-    return new HttpClientWrapper(new SocketsHttpHandler
-    {
-        ConnectCallback = async (ctx, token) =>
-        {
-            Console.WriteLine("Connecting...");
-            var endpointPath = Environment.GetEnvironmentVariable("WOLF_SOCKET_PATH") ??
-                               "/etc/wolf/cfg/wolf.sock";
+builder.Services.AddLogging(configure => configure.AddConsole());
+builder.Services.AddTransient<ColorGenerator>();
+builder.Services.AddWolfApi();
+builder.Services.AddDbContext<WolfLeashDbContext>();
 
-            if (!Path.Exists(endpointPath))
-            {
-                throw new FileNotFoundException(endpointPath);
-            }
-            
-            var socket = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.IP);
-            var endpoint = new UnixDomainSocketEndPoint(endpointPath);
-            await socket.ConnectAsync(endpoint, token);
-            return new NetworkStream(socket, ownsSocket: true);
-        }
-    });
-});
-
-builder.Services.AddSingleton<NSwagWolfApi.NSwagWolfApi>();
-builder.Services.AddSingleton<NSwagDocker.NSwagDocker>();
+builder.Services.AddBlazorBootstrap();
+builder.Services.AddScoped<EventLogger>();
 
 var app = builder.Build();
 
@@ -43,6 +28,19 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
+    
+    // Update Database
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<WolfLeashDbContext>();
+    await db.Database.MigrateAsync();
+}
+else
+{
+    // Recreate Database for Development
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<WolfLeashDbContext>();
+    db.Database.EnsureDeleted();
+    await db.Database.MigrateAsync();
 }
 
 app.UseHttpsRedirection();

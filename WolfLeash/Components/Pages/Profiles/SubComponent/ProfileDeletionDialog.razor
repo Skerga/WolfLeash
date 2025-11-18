@@ -1,0 +1,13 @@
+@using NSwagWolfApi
+<div class="row">
+    <div class="col-5 col-md-3 text-end">Name:</div>
+    <div class="col-7 col-md-9">@Profile.Name</div>
+</div>
+<div class="row">
+    <div class="col-5 col-md-3 text-end">Id:</div>
+    <div class="col-7 col-md-9">@Profile.Id</div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public Profile Profile { get; set; } = null!;
+}

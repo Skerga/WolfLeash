@@ -1,0 +1,47 @@
+@inject WolfApi.Api Api
+
+<Card Class="mb-4" Style="width:18rem;">
+    <CardHeader>
+        @App.Title
+    </CardHeader>
+    @if (icon is not null && icon != "")
+    {
+        <img src="@icon" alt="placeholder"/>
+    }
+    else if(icon == "")
+    {
+        <img src="/default-icon.png" alt="placeholder"/>
+    }
+    else if(icon is null)
+    {
+        <div class="d-flex justify-content-center">
+            <Spinner />
+        </div>
+    }
+
+    <CardFooter>
+        <AppOwners App="@App" />
+    </CardFooter>
+</Card>
+
+@code {
+    [Parameter, EditorRequired] public NSwagWolfApi.App App { get; set; }
+    private string? icon;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var stream = await Api.GetIcon(App);
+        if (stream is null)
+        {
+            icon = "";
+            return;
+        }
+
+        var ms = new MemoryStream();
+        await stream.CopyToAsync(ms);
+        byte[] byteArray = ms.ToArray();
+        var b64String = Convert.ToBase64String(byteArray);
+        icon = "data:image/png;base64," + b64String;
+    }
+
+}

@@ -3,7 +3,7 @@
   "profiles": {
     "DebugRoslynSourceGenerator": {
       "commandName": "DebugRoslynComponent",
-      "targetProject": "../WolfLeash/WolfLeash.csproj"
+      "targetProject": "../WolfApi/WolfApi.csproj"
     }
   }
 }

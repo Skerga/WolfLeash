@@ -1,0 +1,39 @@
+@page "/Clients/Paired"
+@using NSwagWolfApi
+@inject WolfApi.Api Api
+
+@if (PairedClients is null)
+{
+    <Spinner />
+}
+else
+{
+    @foreach (var client in PairedClients)
+    {
+        @client.Client_id
+        <Button @onclick="() => UnpairClient(client)" Color="ButtonColor.Danger">Unpair</Button>
+        <br>
+    }
+}
+
+
+@code {
+    private List<PairedClient>? PairedClients { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await Api.WolfApi.ClientsAsync();
+        PairedClients = result?.Clients.ToList() ?? [];
+    }
+
+    private async Task UnpairClient(PairedClient client)
+    {
+        await Api.WolfApi.Client2Async(new UnpairClientRequest()
+        {
+            Client_id = client.Client_id
+        });
+
+        var result = await Api.WolfApi.ClientsAsync();
+        PairedClients = result?.Clients.ToList() ?? [];
+    }
+}

@@ -1,0 +1,18 @@
+<CardGroup>
+    @foreach (var app in Apps)
+    {
+        <AppCard App="@app" />
+    }
+    @if (Apps.Count() < GroupSize)
+    {
+        @foreach (var _ in Enumerable.Range(0, GroupSize - Apps.Count()))
+        {
+            <Card />
+        }
+    }
+</CardGroup>
+
+@code {
+    [Parameter, EditorRequired] public int GroupSize { get; set; }
+    [Parameter, EditorRequired] public IEnumerable<NSwagWolfApi.App> Apps { get; set; } = null!;
+}

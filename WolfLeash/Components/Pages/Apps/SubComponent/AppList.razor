@@ -1,0 +1,53 @@
+@implements IDisposable
+@inject WolfApi.Api Api
+@inject WolfLeashDbContext Context
+
+@if (Apps is null)
+{
+    <Spinner />
+}
+else
+{
+    @foreach (var group in Apps.Chunk(ColumnSize))
+    {
+        <AppCardGroup Apps="@group" GroupSize="ColumnSize" />
+    }
+}
+
+
+@code {
+    [Parameter, EditorRequired] public int ColumnSize { get; set; } = 6;
+    private List<NSwagWolfApi.App>? Apps { get; set; } = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Api.Profiles is null)
+            await Api.UpdateProfiles();
+
+        GenerateAppList(Api.Profiles.ToList());
+        Api.ProfilesUpdatedEvent += GenerateAppList;
+    }
+
+    private void GenerateAppList(List<NSwagWolfApi.Profile> profiles)
+    {
+        Apps?.Clear();
+        Apps = profiles.SelectMany(p => p.Apps)
+            .DistinctBy(a => a.Id)
+            .ToList();
+
+        var dbApps = Context
+            .Apps
+            .Include(a => a.Runner)
+            .ToList()
+            .Select(a => a.ToDto());
+
+        Apps.AddRange(dbApps);
+        InvokeAsync(StateHasChanged);
+        Console.WriteLine("AAAAAAAAAA");
+    }
+
+    public void Dispose()
+    {
+        Api.ProfilesUpdatedEvent -= GenerateAppList;
+    }
+}

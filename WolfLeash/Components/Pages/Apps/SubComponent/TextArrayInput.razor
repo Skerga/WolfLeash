@@ -1,0 +1,71 @@
+
+<EditForm EditContext="@editContext" OnValidSubmit="@Submit">
+    <DataAnnotationsValidator />
+    @foreach (var val in Values)
+    {
+        var capured = val;
+        <div class="form-group row mb-3">
+            <div style="display:flex; flex-direction: row; justify-content: left; align-items: center">
+                <TextInput @bind-Value="@capured" Placeholder="@Placeholder" Disabled="true"/>
+                <Button @onclick="@(_ => RemoveEntry(val))" Color="ButtonColor.None">
+                    <Icon Name="IconName.XCircleFill" Color="IconColor.Danger"/>
+                </Button>
+                <br>
+            </div>
+        </div>
+    }
+    <div style="display:flex; flex-direction: row; justify-content: left; align-items: center">
+        <TextInput @bind-Value="@Data" Placeholder="@Placeholder"/>
+        <Button Type="ButtonType.Submit" Color="ButtonColor.None">
+            <Icon Name="IconName.PlusCircleFill" Color="IconColor.Success"/>
+        </Button>
+    </div>
+    <ValidationMessage For="() => Data"/>
+</EditForm>
+
+@code {
+    public List<string> Values = [];
+
+    [Parameter, EditorRequired]
+    public string Placeholder { get; set; }
+
+    [Parameter]
+    public Func<string, List<string>>? Validator { get; set; }
+
+    [SupplyParameterFromForm]
+    private string? Data { get; set; }
+    private ValidationMessageStore? messageStore;
+    private EditContext? editContext;
+
+    protected override void OnInitialized()
+    {
+        Data ??= string.Empty;
+        editContext = new EditContext(Data);
+        editContext.OnValidationRequested += HandleValidationRequested;
+        messageStore = new ValidationMessageStore(editContext);
+    }
+
+    private void RemoveEntry(string s) => Values.Remove(s);
+
+    private void HandleValidationRequested(object? sender,
+        ValidationRequestedEventArgs args)
+    {
+        messageStore?.Clear();
+
+        if(Validator is null) return;
+
+        var messages = Validator(Data!);
+        foreach (var message in messages)
+        {
+            messageStore?.Add(() => Data!, message);
+            return;
+        }
+    }
+
+    private void Submit()
+    {
+        if(!string.IsNullOrEmpty(Data))
+            Values.Add(Data);
+        Data = string.Empty;
+    }
+}

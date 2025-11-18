@@ -1,0 +1,62 @@
+@page "/Profiles/Show"
+@implements IDisposable
+@inject WolfApi.Api Api
+@attribute [StreamRendering]
+
+<AddProfileModal @ref="@_modal" OnProfilesModified="OnProfilesModified"/>
+
+<table class="table">
+    <td><h3>Profiles</h3></td>
+    <td><Button Color="ButtonColor.Primary" @onclick="AddNewProfile">Add Profile</Button></td>
+</table>
+
+@if (Profiles is null)
+{
+    <p>
+        <em>Loading...</em>
+    </p>
+}
+else
+{
+    <Accordion>
+        @foreach (var profile in Profiles)
+        {
+            <AccordionItem Title="@profile.Name" Name="@profile.Name">
+                <Content>
+                    <EditProfile Profile="@profile" OnProfilesModified="OnProfilesModified"></EditProfile>
+                </Content>
+            </AccordionItem>
+        }
+    </Accordion>
+}
+
+@code {
+    [Inject] protected EventLogger EventLogger { get; set; } = null!;
+    private List<NSwagWolfApi.Profile>? Profiles { get; set; } = null!;
+    private AddProfileModal _modal = null!;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        if (Api.Profiles == null)
+        {
+            await Api.UpdateProfiles();
+        }
+
+        Profiles = Api.Profiles.ToList();
+        Api.ProfilesUpdatedEvent += OnProfilesUpdated;
+    }
+
+    private void OnProfilesUpdated(List<NSwagWolfApi.Profile> profiles)
+    {
+        Profiles = profiles;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task AddNewProfile() => await _modal.ShowAsync();
+    private async Task OnProfilesModified() => await Api.UpdateProfiles();
+
+    public void Dispose()
+    {
+        Api.ProfilesUpdatedEvent -= OnProfilesUpdated;
+    }
+}

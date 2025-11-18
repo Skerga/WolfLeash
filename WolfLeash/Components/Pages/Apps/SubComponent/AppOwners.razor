@@ -1,0 +1,77 @@
+@using NSwagWolfApi
+@using App = NSwagWolfApi.App
+@inject WolfApi.Api Api
+@inject WolfLeashDbContext Context
+
+@if (Profiles == null)
+{
+    <Spinner />
+}
+else
+{
+    @foreach (var profile in Profiles)
+    {
+        <Badge Color="BadgeColor.Success" VisuallyHiddenText="">
+            @profile.Name
+            <a @onclick="@(_ => RemoveAppFromProfile(profile))">
+                <Icon Name="IconName.XCircle"/>
+            </a>
+        </Badge>
+    }
+}
+
+@code {
+    [Inject] protected EventLogger EventLogger { get; set; } = null!;
+    [Parameter, EditorRequired] public App App { get; set; } = null!;
+    private List<Profile>? Profiles = null;
+
+    private async Task RemoveAppFromProfile(Profile profile)
+    {
+        EventLogger.LogEvent(new ToastMessage(ToastType.Warning, "", "Profile edited", $"{DateTime.Now}", $"Removed {App.Title} from {profile.Name}"));
+        profile.Apps.Remove(App);
+        profile.Apps = profile.Apps.Where(p => p.Id != App.Id).ToList();
+
+        await Api.UpdateProfile(profile.Id, profile);
+
+        Profiles = Api.Profiles!.Where(p => p.Apps.Any(a => a.Id == App.Id)).ToList();
+
+        if (Profiles.Count <= 0)
+        {
+            await SaveUnusedAppToDb(App);
+        }
+
+    }
+
+    private async Task SaveUnusedAppToDb(App app)
+    {
+        Context.Apps.Add(App);
+        
+        try
+        {
+            await Context.SaveChangesAsync();
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (UniqueConstraintException e)
+        {
+            if (e.ConstraintName == "AppId")
+            {
+                app.Id = $"{app.Id}_tmp";
+                await SaveUnusedAppToDb(app);   
+            }
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Api.Profiles is null)
+        {
+            await Api.UpdateProfiles();
+        }
+
+        Profiles = Api.Profiles
+            .Where(p =>
+                p.Apps.Any(a => a.Id == App.Id)
+            )
+            .ToList();
+    }
+}
