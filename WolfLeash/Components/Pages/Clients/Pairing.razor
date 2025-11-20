@@ -3,6 +3,7 @@
 @using NSwagWolfApi
 @using WolfLeash.Components.Pages.Clients.SubComponent
 @inject WolfApi.Api Api
+
 <h3>Pairing Requests</h3>
 
 @if (PairRequests is null)
@@ -10,6 +11,10 @@
     <div>
         <Spinner />
     </div>
+}
+else if (PairRequests.Count <= 0)
+{
+    <a>No pending pair requests found!</a>
 }
 else
 {
@@ -28,6 +33,13 @@ else
         {
             await GetPairingRequests();
         }
+        Api.ClientPairRequestEvent += OnClientPairRequestEvent;
+    }
+
+    private async void OnClientPairRequestEvent(string json)
+    {
+        await GetPairingRequests();
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task GetPairingRequests()
@@ -38,6 +50,6 @@ else
 
     public void Dispose()
     {
-
+        Api.ClientPairRequestEvent -= OnClientPairRequestEvent;
     }
 }

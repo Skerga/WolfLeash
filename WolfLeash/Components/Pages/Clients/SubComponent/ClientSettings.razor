@@ -1,0 +1,41 @@
+@using NSwagWolfApi
+
+
+@foreach (var controller in Client.Settings.Controllers_override.Index())
+{
+    <div class="form-group row mb-3">
+        <div style="display:flex; flex-direction: row; justify-content: left; align-items: center">
+            <a>#@(controller.Index+1):</a> @ControllerDisplayNames[controller.Item]
+            <Button @onclick="@(_ => {})" Color="ButtonColor.None">
+                <Icon Name="IconName.XCircleFill" Color="IconColor.Danger"/>
+            </Button>
+        </div>
+    </div>
+}
+
+<Dropdown Color="DropdownColor.Secondary" AutoClose="true">
+    <DropdownToggleButton>Add Controller Override</DropdownToggleButton>
+    <DropdownMenu>
+        <DropdownItem @onclick="@(_ => AddControllerOverride(Controllers_override2.AUTO))" Type="DropdownItemType.Button">Auto</DropdownItem>
+        <DropdownItem @onclick="@(_ => AddControllerOverride(Controllers_override2.XBOX))" Type="DropdownItemType.Button">XBox</DropdownItem>
+        <DropdownItem @onclick="@(_ => AddControllerOverride(Controllers_override2.PS))" Type="DropdownItemType.Button">PS</DropdownItem>
+        <DropdownItem @onclick="@(_ => AddControllerOverride(Controllers_override2.NINTENDO))" Type="DropdownItemType.Button">Nintendo</DropdownItem>
+    </DropdownMenu>
+</Dropdown>
+
+@code {
+    [Parameter, EditorRequired] public PairedClient Client { get; set; }
+
+    private Dictionary<Controllers_override2, string> ControllerDisplayNames { get; set; } = new()
+    {
+        { Controllers_override2.AUTO, "Auto" },
+        { Controllers_override2.XBOX , "XBox" },
+        { Controllers_override2.PS, "Playstation"},
+        { Controllers_override2.NINTENDO, "Nintendo"}
+    };
+
+    private async Task AddControllerOverride(Controllers_override2 controller)
+    {
+        Client.Settings.Controllers_override.Add(controller);
+    }
+}

@@ -8,11 +8,13 @@ public class WolfLeashDbContext(DbContextOptionsBuilder<WolfLeashDbContext>? bui
 {
     public DbSet<DbApp> Apps { get; set; }
     public DbSet<Runner> Runners { get; set; }
+    public DbSet<Client> Clients { get; set; }
         
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<DbApp>().ToTable("Apps");
         modelBuilder.Entity<Runner>().ToTable("Runners");
+        modelBuilder.Entity<Client>().ToTable("Clients");
     }
     
     private static DbContextOptions<WolfLeashDbContext> CreateOptions(DbContextOptionsBuilder<WolfLeashDbContext>? builder)

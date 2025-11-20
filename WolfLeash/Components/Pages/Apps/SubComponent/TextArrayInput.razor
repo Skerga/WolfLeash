@@ -6,11 +6,11 @@
         var capured = val;
         <div class="form-group row mb-3">
             <div style="display:flex; flex-direction: row; justify-content: left; align-items: center">
-                <TextInput @bind-Value="@capured" Placeholder="@Placeholder" Disabled="true"/>
+                <TextInput @bind-Value="@capured" Disabled="true"/>
                 <Button @onclick="@(_ => RemoveEntry(val))" Color="ButtonColor.None">
                     <Icon Name="IconName.XCircleFill" Color="IconColor.Danger"/>
                 </Button>
-                <br>
+
             </div>
         </div>
     }

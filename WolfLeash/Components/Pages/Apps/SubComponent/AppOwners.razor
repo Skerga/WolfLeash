@@ -23,7 +23,7 @@ else
 @code {
     [Inject] protected EventLogger EventLogger { get; set; } = null!;
     [Parameter, EditorRequired] public App App { get; set; } = null!;
-    private List<Profile>? Profiles = null;
+    public List<Profile>? Profiles = null;
 
     private async Task RemoveAppFromProfile(Profile profile)
     {
@@ -68,10 +68,12 @@ else
             await Api.UpdateProfiles();
         }
 
-        Profiles = Api.Profiles
-            .Where(p =>
-                p.Apps.Any(a => a.Id == App.Id)
-            )
-            .ToList();
+        // Profiles = Api.Profiles
+        //     .Where(p =>
+        //         p.Apps.Any(a => a.Id == App.Id)
+        //     )
+        //     .ToList();
+
+        Profiles = Api.Profiles.Where(p => p.Apps.Contains(App)).ToList();
     }
 }
