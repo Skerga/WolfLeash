@@ -4,9 +4,12 @@ using WolfApi;
 using WolfLeash.Components;
 using WolfLeash.Components.Classes;
 using WolfLeash.Database;
+using Api = WolfLeash.Components.Classes.Api;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddEnvironmentVariables("WOLF_");
+
+builder.WebHost.UseStaticWebAssets();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -14,7 +17,7 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddLogging(configure => configure.AddConsole());
 builder.Services.AddTransient<ColorGenerator>();
-builder.Services.AddWolfApi();
+builder.Services.AddWolfApi<Api>();
 builder.Services.AddDbContext<WolfLeashDbContext>();
 
 builder.Services.AddBlazorBootstrap();
@@ -39,11 +42,13 @@ else
     // Recreate Database for Development
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<WolfLeashDbContext>();
-    db.Database.EnsureDeleted();
+    //db.Database.EnsureDeleted();
     await db.Database.MigrateAsync();
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
+
+app.UseStaticFiles();
 
 app.UseAntiforgery();
 

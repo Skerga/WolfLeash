@@ -82,7 +82,8 @@ public partial class Api : IHostedService, IApiEventPublisher
         {
             Profiles.Enqueue(profile);
         }
-        ProfilesUpdatedEvent?.Invoke(Profiles.ToList());
+        //ProfilesUpdatedEvent?.Invoke(Profiles.ToList());
+        await OnProfilesUpdatedEvent(profiles);
     }
     
     public async Task<GenericSuccessResponse> AddProfile(Profile profile)
@@ -122,5 +123,11 @@ public partial class Api : IHostedService, IApiEventPublisher
     public async Task<ICollection<Profile>> GetProfiles() =>
         (await WolfApi.ProfilesAsync()).Profiles ?? Array.Empty<Profile>();
 
-    public event IApiEventPublisher.ProfilesUpdatedEventHandler? ProfilesUpdatedEvent;
+    //public event IApiEventPublisher.ProfilesUpdatedEventHandler? ProfilesUpdatedEvent;
+
+    protected virtual Task OnProfilesUpdatedEvent(ICollection<Profile> profiles)
+    {
+        return Task.CompletedTask;
+    }
+    
 }

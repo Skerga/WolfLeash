@@ -26,6 +26,9 @@
 @code {
     public List<string> Values = [];
 
+    [Parameter]
+    public List<string>? DefaultValues { get; set; }
+    
     [Parameter, EditorRequired]
     public string Placeholder { get; set; }
 
@@ -39,6 +42,10 @@
 
     protected override void OnInitialized()
     {
+        if (DefaultValues is not null)
+        {
+            Values.AddRange(DefaultValues);
+        }
         Data ??= string.Empty;
         editContext = new EditContext(Data);
         editContext.OnValidationRequested += HandleValidationRequested;

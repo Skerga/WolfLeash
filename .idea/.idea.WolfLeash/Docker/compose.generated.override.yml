@@ -1,0 +1,37 @@
+# This is a generated file. Not intended for manual editing.
+services:
+  WolfLeash:
+    build:
+      context: "/home/sebastian/Dokumente/WolfLeash"
+      dockerfile: "WolfLeash/Dockerfile"
+      target: "base"
+      args:
+        BUILD_CONFIGURATION: "Debug"
+    command: []
+    entrypoint:
+    - "/opt/JetBrains/RiderDebuggerTools/linux-x64/JetBrains.Debugger.Worker"
+    - "--runtimeconfig"
+    - "/opt/JetBrains/RiderDebuggerTools/JetBrains.Debugger.Worker.runtimeconfig.json"
+    - "--mode=server"
+    - "--frontend-port=57000"
+    - "--backend-port=57200"
+    - "--roslyn-worker-port=57451"
+    - "--timeout=60"
+    environment:
+      ASPNETCORE_STATICWEBASSETS: "/app/bin/Debug/net9.0/WolfLeash.staticwebassets.runtime.CT.json"
+      DOTNET_USE_POLLING_FILE_WATCHER: "true"
+      RIDER_DEBUGGER_LOG_DIR: "/var/opt/JetBrains/RiderDebuggerTools"
+      RESHARPER_LOG_CONF: "/etc/opt/JetBrains/RiderDebuggerTools/backend-log.xml"
+    image: "wolfleash:dev"
+    ports:
+    - "127.0.0.1:57051:57000"
+    - "127.0.0.1:57251:57200"
+    - "127.0.0.1:57451:57451"
+    volumes:
+    - "/home/sebastian/Dokumente/WolfLeash/WolfLeash:/app:rw"
+    - "/home/sebastian/Dokumente/WolfLeash:/src:rw"
+    - "/home/sebastian/.nuget/packages:/home/app/.nuget/packages"
+    - "/home/sebastian/.local/share/JetBrains/RiderRemoteDebugger/2025.3.0.1/Linux64:/opt/JetBrains/RiderDebuggerTools"
+    - "/home/sebastian/.local/bin/JetBrains Rider-2025.1.4/bin/backend-log.xml:/etc/opt/JetBrains/RiderDebuggerTools/backend-log.xml"
+    - "/home/sebastian/.cache/JetBrains/Rider2025.3/log/DebuggerWorker/JetBrains.Debugger.Worker.2025_12_05_12_32_42:/var/opt/JetBrains/RiderDebuggerTools:rw"
+    working_dir: "/app"

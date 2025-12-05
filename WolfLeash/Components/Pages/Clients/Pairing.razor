@@ -2,7 +2,7 @@
 @implements IDisposable
 @using NSwagWolfApi
 @using WolfLeash.Components.Pages.Clients.SubComponent
-@inject WolfApi.Api Api
+@inject Api Api
 
 <h3>Pairing Requests</h3>
 
@@ -33,10 +33,10 @@ else
         {
             await GetPairingRequests();
         }
-        Api.ClientPairRequestEvent += OnClientPairRequestEvent;
+        Api.PairRequestEvent += OnClientPairRequestEvent;
     }
 
-    private async void OnClientPairRequestEvent(string json)
+    private async Task OnClientPairRequestEvent(object? caller, string json)
     {
         await GetPairingRequests();
         await InvokeAsync(StateHasChanged);
@@ -50,6 +50,6 @@ else
 
     public void Dispose()
     {
-        Api.ClientPairRequestEvent -= OnClientPairRequestEvent;
+        Api.PairRequestEvent -= OnClientPairRequestEvent;
     }
 }

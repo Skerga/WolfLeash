@@ -1,11 +1,12 @@
 @page "/Apps/Show"
 @implements IDisposable
-@inject WolfApi.Api Api
+@inject Api Api
 @inject WolfLeashDbContext Context
 
-
-<h3>Apps</h3>
-<Button Color="ButtonColor.Primary" @onclick="AddNewApp">Add</Button>
+<div style="display:flex; flex-direction: row; justify-content: space-between; align-items: center">
+    <h3>Apps</h3>
+    <Button Type="ButtonType.Link" Color="ButtonColor.Primary" To="/apps/add" >Add</Button>
+</div>
 
 @if (Apps is null)
 {
@@ -23,19 +24,21 @@ else
 @code {
     [Parameter, EditorRequired] public int ColumnSize { get; set; } = 7;
     private List<NSwagWolfApi.App>? Apps { get; set; } = null;
+    //private ConfirmDialog dialog = default!;
 
     protected override async Task OnInitializedAsync()
     {
         if (Api.Profiles is null)
             await Api.UpdateProfiles();
 
-        OnProfilesUpdated(Api.Profiles.ToList());
+        await OnProfilesUpdated(this, Api.Profiles.ToList());
         Api.ProfilesUpdatedEvent += OnProfilesUpdated;
     }
 
-    private async void OnProfilesUpdated(List<NSwagWolfApi.Profile> profiles)
+    private async Task OnProfilesUpdated(object caller, ICollection<NSwagWolfApi.Profile> profiles)
     {
         Apps?.Clear();
+        
         Apps = profiles.SelectMany(p => p.Apps)
             .DistinctBy(a => a.Id)
             .ToList();
@@ -54,53 +57,5 @@ else
     public void Dispose()
     {
         Api.ProfilesUpdatedEvent -= OnProfilesUpdated;
-    }
-
-    private async Task AddNewApp()
-    {
-        var newApp = new DbApp
-        {
-            Title = "Test",
-            AppId = "test123456",
-            Runner = new Runner
-            {
-                Name = "TEST",
-                Image = "",
-                Mounts = [],
-                Env = [],
-                Devices = [],
-                Ports = [],
-                BaseCreateJson = ""
-            },
-            RenderNode = ""
-        };
-
-        if (Api.Profiles is null)
-            await Api.UpdateProfiles();
-
-        if (Api.Profiles.SelectMany(p => p.Apps).Distinct().Any(a => a.Id == newApp.AppId))
-        {
-            Console.WriteLine("Caught: App already Exists");
-            return;
-        }
-
-        Context.Apps.Add(newApp);
-
-        try
-        {
-            await Context.SaveChangesAsync();
-        }
-        catch (UniqueConstraintException)
-        {
-            Console.WriteLine("App already Exists");
-        }
-
-        var apps = Context.Apps.ToList();
-        foreach (var app in apps)
-        {
-            Console.WriteLine($"{app.Id} {app.Title} {app.AppId}");
-        }
-
-        OnProfilesUpdated(Api.Profiles.ToList());
     }
 }

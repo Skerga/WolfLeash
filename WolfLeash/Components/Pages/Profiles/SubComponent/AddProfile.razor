@@ -2,41 +2,40 @@
 @using System.ComponentModel.DataAnnotations
 @using WolfLeash.Extensions
 @inject ILogger<AddProfile> Logger
-@inject WolfApi.Api Api
+@inject Api Api
 @inject EventLogger Event
 
+<div style="width: 500px">
 <EditForm EditContext="editContext" OnValidSubmit="Submit">
     <DataAnnotationsValidator />
-    <div>
-        <label>
+    <div class="form-group row mb-3">
             <TextInput @bind-Value="Data!.Name" Placeholder="Name"/>
             <ValidationMessage For="() => Data!.Name"/>
-        </label>
     </div>
-    <div>
-        <label>
+    <div class="form-group row mb-3">
             <TextInput @bind-Value="Data!.IconPngPath" Placeholder="Icon"/>
             <ValidationMessage For="() => Data!.IconPngPath"/>
-        </label>
     </div>
 
-    <div>
-        <label>
+    <div class="form-group row mb-3">
+        <div style="display:flex; flex-direction: row; justify-content: left; align-items: center">
+            <a>Enable Pin:</a>
             <InputCheckbox @bind-Value="_showPinInput"/>
-            Enable Pin.
-            @if (_showPinInput)
-            {
-                <TextInput @bind-Value="Data!.PinString" Placeholder="Pin"/>
-                <ValidationMessage For="() => Data!.PinString"/>
-            }
-        </label>
+        </div>
     </div>
+    @if (_showPinInput)
+    {
+        <div class="form-group row mb-3">
+            <TextInput @bind-Value="Data!.PinString" Placeholder="Pin"/>
+            <ValidationMessage For="() => Data!.PinString"/>
+        </div>
+    }
 
     <div>
         <Button Type="ButtonType.Submit" Color="ButtonColor.Primary">Submit</Button>
     </div>
 </EditForm>
-
+</div>
 
 @code {
     [Parameter]

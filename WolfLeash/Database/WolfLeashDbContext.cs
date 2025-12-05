@@ -29,7 +29,7 @@ public class WolfLeashDbContext(DbContextOptionsBuilder<WolfLeashDbContext>? bui
             Directory.CreateDirectory(dbPath);
         
         dbPath = Path.Join(dbPath, "database.db");
-
+        
         return new DbContextOptionsBuilder<WolfLeashDbContext>()
             .UseSqlite($"Data Source={dbPath};")
             .UseExceptionProcessor()

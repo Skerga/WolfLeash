@@ -11,4 +11,11 @@ public static class Extensions
 
         return services;
     }
+
+    public static IServiceCollection AddWolfApi<T>(this IServiceCollection services) where T : Api
+    {
+        services.AddSingleton<T>()
+            .AddHostedService(p => p.GetRequiredService<T>());
+        return services;
+    }
 }

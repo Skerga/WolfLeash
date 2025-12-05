@@ -1,14 +1,14 @@
 @page "/Profiles/Show"
 @implements IDisposable
-@inject WolfApi.Api Api
+@inject Api Api
 @attribute [StreamRendering]
 
 <AddProfileModal @ref="@_modal" OnProfilesModified="OnProfilesModified"/>
 
-<table class="table">
-    <td><h3>Profiles</h3></td>
-    <td><Button Color="ButtonColor.Primary" @onclick="AddNewProfile">Add Profile</Button></td>
-</table>
+<div style="display:flex; flex-direction: row; justify-content: space-between; align-items: center">
+    <h3>Profiles</h3>
+    <Button Color="ButtonColor.Primary" @onclick="AddNewProfile">Add Profile</Button>
+</div>
 
 @if (Profiles is null)
 {
@@ -46,10 +46,10 @@ else
         Api.ProfilesUpdatedEvent += OnProfilesUpdated;
     }
 
-    private void OnProfilesUpdated(List<NSwagWolfApi.Profile> profiles)
+    private async Task OnProfilesUpdated(object? caller, ICollection<NSwagWolfApi.Profile> profiles)
     {
-        Profiles = profiles;
-        InvokeAsync(StateHasChanged);
+        Profiles = profiles.ToList();
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task AddNewProfile() => await _modal.ShowAsync();

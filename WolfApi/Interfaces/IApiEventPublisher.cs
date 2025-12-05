@@ -4,7 +4,7 @@ namespace WolfApi;
 
 public interface IApiEventPublisher
 {
-    public delegate void ApiEventEventHandler(string eventType, string data);
+    /*public delegate void ApiEventEventHandler(string eventType, string data);
     event ApiEventEventHandler ApiEvent;
 
     public delegate void ClientPairRequestEventHandler(string json);
@@ -41,5 +41,5 @@ public interface IApiEventPublisher
     event DockerPulledImageEventHandler DockerPulledImageEvent;
     
     public delegate void SseConnectionLostEventHandler(bool isFatal);
-    event SseConnectionLostEventHandler SseConnectionLostEvent;
+    event SseConnectionLostEventHandler SseConnectionLostEvent;*/
 }

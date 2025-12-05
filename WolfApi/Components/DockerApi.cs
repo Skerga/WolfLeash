@@ -54,7 +54,8 @@ public partial class Api
                          { "image_name": "{{imageName}}" }
                          """;
 
-            DockerImagePullProgressEvent?.Invoke(imageName, 0.0);
+            //DockerImagePullProgressEvent?.Invoke(imageName, 0.0);
+            await OnDockerImagePullProgressEvent(imageName, 0.0);
 
             _logger.LogInformation("Pulling image: {img}", imageName);
 
@@ -93,9 +94,11 @@ public partial class Api
                     ExistingDockerImages[imageName] = true;
 
                     if (hasDownloaded)
-                        DockerImageUpdatedEvent?.Invoke(imageName);
+                        await OnDockerImageUpdatedEvent(imageName);
+                        //DockerImageUpdatedEvent?.Invoke(imageName);
                     else
-                        DockerImageAlreadyUptoDateEvent?.Invoke(imageName);
+                        await OnDockerImageAlreadyUptoDateEvent(imageName);
+                        //DockerImageAlreadyUptoDateEvent?.Invoke(imageName);
 
                     _logger.LogInformation("Image: {img} {status}", imageName,
                         hasDownloaded ? "was Updated" : "is already up to Date");
@@ -132,7 +135,8 @@ public partial class Api
                     isUnpacking = true;
                 lastCurrent = current;
                 var percentProgress = 100.0 * (current + (isUnpacking ? sizeTotal : 0)) / total;
-                DockerImagePullProgressEvent?.Invoke(imageName, percentProgress);
+                //DockerImagePullProgressEvent?.Invoke(imageName, percentProgress);
+                await OnDockerImagePullProgressEvent(imageName, percentProgress);
             }
         });
     }
@@ -148,8 +152,23 @@ public partial class Api
             return default;
         }
     }
+
+    protected virtual Task OnDockerImageUpdatedEvent(string imageName)
+    {
+        return Task.CompletedTask;
+    }
+
+    protected virtual Task OnDockerImageAlreadyUptoDateEvent(string imageName)
+    {
+        return Task.CompletedTask;
+    }
+
+    protected virtual Task OnDockerImagePullProgressEvent(string imageName, double progress)
+    {
+        return Task.CompletedTask;
+    }
     
-    public event IApiEventPublisher.ImageUpdatedEventHandler? DockerImageUpdatedEvent;
-    public event IApiEventPublisher.ImageAlreadyUptoDateEventHandler? DockerImageAlreadyUptoDateEvent;
-    public event IApiEventPublisher.ImagePullProgressEventHandler? DockerImagePullProgressEvent;
+    // public event IApiEventPublisher.ImageUpdatedEventHandler? DockerImageUpdatedEvent;
+    // public event IApiEventPublisher.ImageAlreadyUptoDateEventHandler? DockerImageAlreadyUptoDateEvent;
+    // public event IApiEventPublisher.ImagePullProgressEventHandler? DockerImagePullProgressEvent;
 }

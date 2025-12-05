@@ -1,0 +1,19 @@
+﻿services:
+  WolfLeash:
+    image: wolfleash
+    build:
+      context: .
+      dockerfile: WolfLeash/Dockerfile
+    ports:
+      - "5002:8080"
+      - "5003:8081"
+    volumes:
+      - "/etc/wolf/cfg/wolf.sock:/etc/wolf/cfg/wolf.sock:rw"
+      - "/etc/wolf/covers:/etc/wolf/covers:r"
+      - "/etc/wolf/profile-data:/etc/wolf/profile-data:r"
+      - "WolfLeashPersistant:/app/WolfLeash/:rw"
+    environment:
+      - "DOTNET_ENVIRONMENT=Production"
+    
+volumes:
+  WolfLeashPersistant: {}

@@ -1,6 +1,6 @@
 ﻿@inherits LayoutComponentBase
 @implements IDisposable
-@inject WolfApi.Api Api
+@inject Api Api
 
 
 <div class="bb-page">
@@ -38,11 +38,11 @@
 
     protected override void OnInitialized()
     {
-        Api.ClientPairRequestEvent += OnClientPairRequestEvent;
+        Api.PairRequestEvent += OnClientPairRequestEvent;
     }
 
-    private void OnClientPairRequestEvent(string json)
-        => InvokeAsync(ShowPairRequestToast);
+    private async Task OnClientPairRequestEvent(object? caller, string json)
+        => await InvokeAsync(ShowPairRequestToast);
 
     private void ShowPairRequestToast()
     {
@@ -90,6 +90,6 @@
 
     public void Dispose()
     {
-        Api.ClientPairRequestEvent -= OnClientPairRequestEvent;
+        Api.PairRequestEvent -= OnClientPairRequestEvent;
     }
 }

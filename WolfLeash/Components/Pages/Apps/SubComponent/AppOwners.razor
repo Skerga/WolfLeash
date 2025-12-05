@@ -1,6 +1,6 @@
 @using NSwagWolfApi
 @using App = NSwagWolfApi.App
-@inject WolfApi.Api Api
+@inject Api Api
 @inject WolfLeashDbContext Context
 
 @if (Profiles == null)
@@ -68,12 +68,23 @@ else
             await Api.UpdateProfiles();
         }
 
-        // Profiles = Api.Profiles
-        //     .Where(p =>
-        //         p.Apps.Any(a => a.Id == App.Id)
-        //     )
-        //     .ToList();
-
-        Profiles = Api.Profiles.Where(p => p.Apps.Contains(App)).ToList();
+        Profiles = Api.Profiles
+            .Where(p =>
+                p.Apps.Any(a => 
+                    a.Title == App.Title &&
+                    a.Icon_png_path == App.Icon_png_path &&
+                    a.Runner.Base_create_json == App.Runner.Base_create_json &&
+                    a.Runner.Name == App.Runner.Name &&
+                    a.Runner.Image == App.Runner.Image &&
+                    a.Runner.Type == App.Runner.Type &&
+                    a.Runner.Devices.SequenceEqual(App.Runner.Devices) &&
+                    a.Runner.Mounts.SequenceEqual(App.Runner.Mounts) &&
+                    a.Runner.Env.SequenceEqual(App.Runner.Env) &&
+                    a.Runner.Ports.SequenceEqual(App.Runner.Ports)
+                )
+            )
+            .ToList();
+        
+        //Profiles = Api.Profiles.Where(p => p.Apps.Contains(App)).ToList();
     }
 }

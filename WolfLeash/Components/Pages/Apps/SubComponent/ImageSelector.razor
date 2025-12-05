@@ -1,0 +1,33 @@
+@using Microsoft.AspNetCore.Mvc
+<img src="@_icon" @onclick="SetValue" alt="placeholder"/>
+
+@code {
+    [Parameter, EditorRequired] public string FilePath { get; set; }
+    [Parameter, EditorRequired] public string Value { get; set; }
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    private string? _icon = null!;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var stream = new FileStream(FilePath, FileMode.Open, FileAccess.Read);
+            var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            var byteArray = ms.ToArray();
+            var b64String = Convert.ToBase64String(byteArray);
+            _icon = "data:image/png;base64," + b64String;
+        }
+        catch (FileNotFoundException e)
+        {
+            Console.WriteLine(e.Message);
+        }
+
+    }
+
+    private async Task SetValue()
+    {
+        Value = FilePath;
+        await ValueChanged.InvokeAsync(Value);
+    }
+}

@@ -1,7 +1,7 @@
 @page "/Clients/Paired"
 @using NSwagWolfApi
 @using WolfLeash.Components.Pages.Clients.SubComponent
-@inject WolfApi.Api Api
+@inject Api Api
 @inject WolfLeashDbContext Context
 
 <h3>Paired Clients:</h3>
@@ -19,7 +19,7 @@ else
             <AccordionTitleEdit Client="@client" />
         </TitleTemplate>
         <Content>
-            <ClientSettings Client="@ApiClients.First(c => c.Client_id == client.Id)" />
+            @*<ClientSettings Client="@ApiClients.First(c => c.Client_id == client.Id)" />*@
             <div style="display:flex; flex-direction: row; justify-content: left; align-items: center">
                 <Button @onclick="() => UnpairClient(client)" Color="ButtonColor.Danger">Unpair</Button>
             </div>
