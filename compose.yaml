@@ -60,9 +60,6 @@
               defaultCertificate:
                 certFile: /certs/local.crt
                 keyFile: /certs/local.key"
-    environment:
-      - "USER=Admin"
-      - "PASSWORD=123456"
     volumes:
       - "Config:/config"
   
