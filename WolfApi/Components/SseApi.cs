@@ -11,7 +11,7 @@ public partial class Api
             {
                 try
                 {
-                    var stream = await _httpClient.GetStreamAsync($"http://localhost/api/v1/events", cancellationToken);
+                    var stream = await _httpClient.GetStreamAsync($"{BaseAddress}events", cancellationToken);
                     var eventType = string.Empty;
                     using var reader = new StreamReader(stream);
                     while (!reader.EndOfStream)
@@ -82,7 +82,7 @@ public partial class Api
 
         if (!operations.TryGetValue(@event, out var value))
         {
-            _logger.LogWarning("{event} is not handled by WolfLeash, check for Updates", @event);
+            _logger.LogWarning("{event} is not handled by this Client version, check for Updates", @event);
             return;
         }
 
@@ -203,16 +203,4 @@ public partial class Api
     {
         return Task.CompletedTask;
     }
-    
-    // public event IApiEventPublisher.ApiEventEventHandler? ApiEvent;
-    //
-    // public event IApiEventPublisher.ClientPairRequestEventHandler ClientPairRequestEvent;
-    //
-    // public event IApiEventPublisher.LobbyCreatedEventEventHandler? LobbyCreatedEvent;
-    // public event IApiEventPublisher.LobbyStoppedEventEventHandler? LobbyStoppedEvent;
-    // public event IApiEventPublisher.LobbyJoinEventEventHandler? LobbyJoinEvent;
-    // public event IApiEventPublisher.LobbyLeaveEventEventHandler? LobbyLeaveEvent;
-    // public event IApiEventPublisher.SseConnectionLostEventHandler? SseConnectionLostEvent;
-    // public event IApiEventPublisher.DockerPullingImageEventHandler? DockerPullingImageEvent;
-    // public event IApiEventPublisher.DockerPulledImageEventHandler? DockerPulledImageEvent;
 }

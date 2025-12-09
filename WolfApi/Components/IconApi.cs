@@ -14,7 +14,7 @@ public partial class Api
         if (app.Runner?.Image is null || !app.Runner.Image.Contains("ghcr.io/games-on-whales/"))
             return null;
 
-        var name = app.Runner.Image.Substring("ghcr.io/games-on-whales/".Length);
+        var name = app.Runner.Image["ghcr.io/games-on-whales/".Length..];
         var idx = name.LastIndexOf(':');
         if (idx >= 0)
             name = name[..idx];
@@ -35,7 +35,7 @@ public partial class Api
         HttpResponseMessage message;
         try
         {
-            message = await _httpClient.GetAsync($"http://localhost/api/v1/utils/get-icon?icon_path={iconPath}");
+            message = await _httpClient.GetAsync($"{BaseAddress}utils/get-icon?icon_path={iconPath}");
         }
         catch (HttpRequestException e)
         {

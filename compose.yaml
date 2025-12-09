@@ -87,10 +87,10 @@
       dockerfile: WolfLeash/Dockerfile
     volumes:
       - "/etc/wolf/cfg/wolf.sock:/etc/wolf/cfg/wolf.sock:rw"
-      - "/etc/wolf/covers:/etc/wolf/covers:r"
-      - "/etc/wolf/profile-data:/etc/wolf/profile-data:r"
+      - "/etc/wolf/covers:/etc/wolf/covers:ro"
+      - "/etc/wolf/profile-data:/etc/wolf/profile-data:ro"
       - "Database:/app/WolfLeash/:rw"
-      - "Keys:/root/.aspnet/DataProtection-Keys"
+      - "Keys:/home/app/.aspnet/DataProtection-Keys"
     environment:
       - "DOTNET_ENVIRONMENT=Production"
     labels:

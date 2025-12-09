@@ -5,7 +5,6 @@ using WolfApi;
 
 public class Api : WolfApi.Api
 {
-    public Api(WolfApiHttpClient httpClient, ILogger<WolfApi.Api> logger) : base(httpClient, logger) { }
     public Api(ILogger<WolfApi.Api> logger, IConfiguration configuration) : base(logger, configuration) { }
 
     private static Task Raise<TSource, TEventArgs>(Func<TSource, TEventArgs, Task>? handlers, TSource source, TEventArgs args)

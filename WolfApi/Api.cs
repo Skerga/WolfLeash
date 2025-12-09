@@ -1,8 +1,6 @@
-using System.Diagnostics.CodeAnalysis;
-using System.Threading.RateLimiting;
-
 namespace WolfApi;
 
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Configuration;
 using System.Collections.Concurrent;
 using NSwagWolfApi;
@@ -10,29 +8,38 @@ using NSwagDocker;
 using System.Net.Sockets;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics.CodeAnalysis;
+using System.Threading.RateLimiting;
 
-public partial class Api : IHostedService, IApiEventPublisher
+public partial class Api : IHostedService
 {
     public NSwagDocker DockerApi { get; }
     public NSwagWolfApi WolfApi { get; }
     private readonly ILogger<Api> _logger;
     private readonly HttpClient _httpClient;
 
+    public string WolfSocketPath { get; set; } = "unix:///etc/wolf/cfg/wolf.sock";
+    public string BaseAddress { get; set; } = "http://localhost/api/v1/";
+    
     public ConcurrentQueue<Profile>? Profiles { get; private set; }
+
+    public Api() : this(NullLogger<Api>.Instance) { }
     
+    public Api(ILogger<Api> logger) : 
+        this(logger, 
+            new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string>
+            {
+                {"SOCKET_PATH", "/etc/wolf/cfg/wolf.sock"}
+            }!).Build())
+    { }
     
-    // ReSharper disable once ConvertToPrimaryConstructor
-    public Api(WolfApiHttpClient httpClient, ILogger<Api> logger)
-    {
-        DockerApi = new(httpClient);
-        WolfApi = new(httpClient);
-        _httpClient = httpClient;
-        _logger = logger;
-    }
+    public Api(IConfiguration config) : this(NullLogger<Api>.Instance, config) { }
     
     public Api(ILogger<Api> logger, IConfiguration configuration)
     {
-        configuration.GetValue<string>("SOCKET_PATH");
+        var socketPath = configuration.GetValue<string?>("SOCKET_PATH") ?? WolfSocketPath;
+        BaseAddress = configuration.GetValue<string?>("BASE_ADDRESS") ?? BaseAddress;
         
         var options = new TokenBucketRateLimiterOptions
         { 
@@ -44,29 +51,41 @@ public partial class Api : IHostedService, IApiEventPublisher
             AutoReplenishment = true
         };
         
-        _httpClient = new HttpClient(
-            handler: new ClientSideRateLimitedHandler(
-                limiter: new TokenBucketRateLimiter(options),
-                httpMessageHandler: new SocketsHttpHandler
-                {
-                    ConnectCallback = async (_, token) =>
+        if (socketPath.StartsWith("unix://"))
+        {
+            socketPath = socketPath["unix://".Length..];
+            _httpClient = new HttpClient(
+                handler: new ClientSideRateLimitedHandler(
+                    limiter: new TokenBucketRateLimiter(options),
+                    httpMessageHandler: new SocketsHttpHandler
                     {
-                        var endpointPath = Environment.GetEnvironmentVariable("WOLF_SOCKET_PATH") ??
-                                           "/etc/wolf/cfg/wolf.sock";
-
-                        if (!Path.Exists(endpointPath))
+                        ConnectCallback = async (_, token) =>
                         {
-                            throw new FileNotFoundException(endpointPath);
-                        }
+                            if (!Path.Exists(socketPath))
+                            {
+                                throw new FileNotFoundException(socketPath);
+                            }
 
-                        var socket = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.IP);
-                        var endpoint = new UnixDomainSocketEndPoint(endpointPath);
-                        await socket.ConnectAsync(endpoint, token);
-                        return new NetworkStream(socket, ownsSocket: true);
+                            var socket = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.IP);
+                            var endpoint = new UnixDomainSocketEndPoint(socketPath);
+                            await socket.ConnectAsync(endpoint, token);
+                            return new NetworkStream(socket, ownsSocket: true);
+                        }
                     }
-                }
-            )
-        );
+                )
+            );
+        }
+        else
+        {
+            _httpClient = new HttpClient(
+                handler: new ClientSideRateLimitedHandler(
+                    limiter: new TokenBucketRateLimiter(options),
+                    httpMessageHandler: new HttpClientHandler()
+                )
+            );
+        }
+        
+
         
         DockerApi = new(_httpClient);
         WolfApi = new(_httpClient);
@@ -82,7 +101,6 @@ public partial class Api : IHostedService, IApiEventPublisher
         {
             Profiles.Enqueue(profile);
         }
-        //ProfilesUpdatedEvent?.Invoke(Profiles.ToList());
         await OnProfilesUpdatedEvent(profiles);
     }
     

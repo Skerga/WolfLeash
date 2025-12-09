@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+set -e
+
+exit_script() {
+    trap - SIGTERM SIGINT SIGQUIT SIGHUP ERR EXIT
+    kill -- -$$
+    if [ "$(id -u)" = "0" ]; then
+        for init_script in /etc/cont-shutdown.d/*.sh ; do
+            source "${init_script}"
+        done
+    fi
+    exit 1
+}
+
+trap exit_script SIGTERM SIGINT SIGQUIT SIGHUP ERR EXIT
+
+# Execute all container init scripts. Only run this if the container is started as the root user
+if [ "$(id -u)" = "0" ]; then
+    for init_script in /etc/cont-init.d/*.sh ; do
+        source "${init_script}"
+    done
+fi
+
+socat UNIX-LISTEN:/app/wolf.sock,mode=600,user=${APP_UID},group=${APP_UID},reuseaddr,fork UNIX-CONNECT:/etc/wolf/cfg/wolf.sock 2> /dev/null &
+export "WOLF_SOCKET_PATH=unix:///app/wolf.sock"
+
+echo "Starting Server"
+exec gosu "${APP_UID}" dotnet WolfLeash.dll &
+wait $!

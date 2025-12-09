@@ -20,6 +20,45 @@ ARG BUILD_CONFIGURATION=Release
 RUN dotnet publish "./WolfLeash.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
+
+USER root
+
+ARG TARGETARCH TARGETVARIANT
+ARG GOSU_VERSION=1.14
+
+RUN <<_INSTALL_PACKAGES
+set -e
+
+echo "**** Update apt database ****"
+apt-get update
+
+echo "**** Install certificates ****"
+apt-get install -y --reinstall --no-install-recommends \
+    ca-certificates
+
+echo "**** Install base packages ****"
+apt-get install -y --no-install-recommends \
+    fuse \
+    libnss3 \
+    wget \
+    curl \
+    jq \
+    socat
+
+echo "**** Install gosu ****"
+wget --progress=dot:giga \
+    -O /usr/bin/gosu \
+    "https://github.com/tianon/gosu/releases/download/${GOSU_VERSION}/gosu-${TARGETARCH}${TARGETVARIANT}"
+chmod +x /usr/bin/gosu
+
+echo "**** Verify gosu works ****"
+gosu nobody true && echo "Working!"
+
+_INSTALL_PACKAGES
+
+#USER $APP_UID
+
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "-c", "Release", "WolfLeash.dll"]
+COPY --chmod=755 WolfLeash/DockerOverlay /
+ENTRYPOINT ["/entrypoint.sh"]

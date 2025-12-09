@@ -53,13 +53,12 @@ public partial class Api
             var json = $$"""
                          { "image_name": "{{imageName}}" }
                          """;
-
-            //DockerImagePullProgressEvent?.Invoke(imageName, 0.0);
+            
             await OnDockerImagePullProgressEvent(imageName, 0.0);
 
             _logger.LogInformation("Pulling image: {img}", imageName);
 
-            var reqMsg = new HttpRequestMessage(HttpMethod.Post, "http://localhost/api/v1/docker/images/pull")
+            var reqMsg = new HttpRequestMessage(HttpMethod.Post, $"{BaseAddress}docker/images/pull")
             {
                 Content = new StringContent(json)
             };
@@ -88,17 +87,14 @@ public partial class Api
                 if (parsed is null)
                     continue;
 
-
                 if (parsed.Success is not null && parsed.Success == true)
                 {
                     ExistingDockerImages[imageName] = true;
 
                     if (hasDownloaded)
                         await OnDockerImageUpdatedEvent(imageName);
-                        //DockerImageUpdatedEvent?.Invoke(imageName);
                     else
                         await OnDockerImageAlreadyUptoDateEvent(imageName);
-                        //DockerImageAlreadyUptoDateEvent?.Invoke(imageName);
 
                     _logger.LogInformation("Image: {img} {status}", imageName,
                         hasDownloaded ? "was Updated" : "is already up to Date");
@@ -135,7 +131,7 @@ public partial class Api
                     isUnpacking = true;
                 lastCurrent = current;
                 var percentProgress = 100.0 * (current + (isUnpacking ? sizeTotal : 0)) / total;
-                //DockerImagePullProgressEvent?.Invoke(imageName, percentProgress);
+
                 await OnDockerImagePullProgressEvent(imageName, percentProgress);
             }
         });
@@ -167,8 +163,4 @@ public partial class Api
     {
         return Task.CompletedTask;
     }
-    
-    // public event IApiEventPublisher.ImageUpdatedEventHandler? DockerImageUpdatedEvent;
-    // public event IApiEventPublisher.ImageAlreadyUptoDateEventHandler? DockerImageAlreadyUptoDateEvent;
-    // public event IApiEventPublisher.ImagePullProgressEventHandler? DockerImagePullProgressEvent;
 }
