@@ -1,3 +1,4 @@
+@using System.Diagnostics
 @using NSwagDocker
 @using WolfLeash.Components.Classes
 @inject Api Api
@@ -154,7 +155,28 @@
     {
         try
         {
-            
+            /*var proc = new Process 
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "/bin/du",
+                    Arguments = $"-s {path}",
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    CreateNoWindow = true
+                }
+            };
+            proc.Start();
+            while (!proc.StandardOutput.EndOfStream)
+            {
+                var line = proc.StandardOutput.ReadLine();
+                if (line is not null)
+                {
+                    Console.WriteLine(line);
+                    // do something with line
+                }
+            }*/
+
             return GetDirectorySize(new DirectoryInfo(path)) / (double)1_000_000_000;
         }
         catch (DirectoryNotFoundException)
