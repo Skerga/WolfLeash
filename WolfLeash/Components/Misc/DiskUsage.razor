@@ -154,7 +154,8 @@
     {
         try
         {
-            return DirSize(new DirectoryInfo(path)) / (double)1_000_000_000;
+            
+            return GetDirectorySize(new DirectoryInfo(path)) / (double)1_000_000_000;
         }
         catch (DirectoryNotFoundException)
         {
@@ -162,9 +163,9 @@
         }
     }
     
-    private static long DirSize(DirectoryInfo d) 
+    /*private static long DirSize(DirectoryInfo d) 
     {
-        long size = 0;    
+        long size = 0;
         // Add file sizes.
         var fis = d.GetFiles();
         foreach (var fi in fis) 
@@ -175,9 +176,26 @@
         var dis = d.GetDirectories();
         foreach (var di in dis) 
         {
-            size += DirSize(di);   
+            size += DirSize(di);
         }
         return size;
+    }*/
+    
+    private static long GetDirectorySize(DirectoryInfo? directoryInfo, bool recursive = true)
+    {
+        var startDirectorySize = default(long);
+        if (directoryInfo is not { Exists: true })
+            return startDirectorySize; //Return 0 while Directory does not exist.
+
+        //Add size of files in the Current Directory to main size.
+        foreach (var fileInfo in directoryInfo.GetFiles())
+            System.Threading.Interlocked.Add(ref startDirectorySize, fileInfo.Length);
+
+        if (recursive) //Loop on Sub Direcotries in the Current Directory and Calculate its files size.
+            System.Threading.Tasks.Parallel.ForEach(directoryInfo.GetDirectories(), (subDirectory) =>
+                System.Threading.Interlocked.Add(ref startDirectorySize, GetDirectorySize(subDirectory, recursive)));
+
+        return startDirectorySize;  //Return full Size of this Directory.
     }
     
     #endregion  Data Preparation
